@@ -186,13 +186,16 @@ DECOMPOSE .CP[0] = .#CP
   .$seq_num = $DECODE(.$full_message, "|", 0)
   .seq_num = VAL(.$seq_num)
   ;
-  IF NOT .seq_num == seq_num_old + 1 THEN
-    $shutdown_reason = "Sequence number of received trajectory points mismatch. Expected:" + $ENCODE(seq_num_old) + " but got:" + $ENCODE(.seq_num)
+  ;
+  IF .seq_num != (seq_num_old + 1) THEN
+    $shutdown_reason = "Sequence number of received trajectory points mismatch. Expected:" + $ENCODE(seq_num_old+1) + " but got:" + $ENCODE(.seq_num)
     CALL shutdown_kawa
-
     RETURN
   ELSE
     seq_num_old = .seq_num
+    if seq_num_old == 99 THEN
+      seq_num_old = -1 ; the next seq nummer we get is 0 so we need to start at -1 we cause we do +1 in the if statement
+    END
   END
   ;  
   .$temp = $DECODE(.$full_message, "|", 1)
@@ -310,19 +313,19 @@ WHILE sig(keep_active_signal) DO
   IF queue_front > 0 THEN
     ;
     $movement_state = "Setting motion parameters"
-    IF not queue[queue_front, 1] == .current_speed THEN
+    IF queue[queue_front, 1] != .current_speed THEN
       .current_speed = queue[queue_front, 1]
       SPEED .current_speed ALWAYS
     END   
-    IF not queue[queue_front, 2] == .current_accuracy THEN
+    IF queue[queue_front, 2] != .current_accuracy THEN
       .current_accuracy = queue[queue_front, 2]
       ACCURACY .current_accuracy ALWAYS
     END
-    IF not queue[queue_front, 3] == .current_deceleration THEN
+    IF queue[queue_front, 3] != .current_deceleration THEN
       .current_deceleration = queue[queue_front, 3]
       DECEL .current_deceleration ALWAYS
     END 
-    IF not queue[queue_front, 4] == .current_acceleration THEN
+    IF queue[queue_front, 4] != .current_acceleration THEN
       .current_acceleration = queue[queue_front, 4]
       ACCEL .current_acceleration ALWAYS
     END
